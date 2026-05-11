@@ -10,21 +10,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --blush: #f2ddd5;
-    --rose: #c9847a;
-    --deep-rose: #a05a52;
-    --champagne: #f7efe6;
-    --gold: #c8a97e;
-    --ivory: #fdf8f3;
-    --text: #3a2a26;
-    --muted: #9b7e78;
-    --white: #ffffff;
+    --blush: #f2ddd5; --rose: #c9847a; --deep-rose: #a05a52;
+    --gold: #c8a97e; --ivory: #fdf8f3; --text: #3a2a26;
+    --muted: #9b7e78; --white: #ffffff;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Jost', sans-serif; background: var(--ivory); overflow: hidden; }
-
   #map { width: 100vw; height: 100vh; z-index: 1; }
-
   .back-btn {
     position: fixed; top: 20px; left: 20px; z-index: 1000;
     width: 42px; height: 42px; border-radius: 50%;
@@ -34,9 +26,7 @@
     cursor: pointer; color: var(--deep-rose);
     box-shadow: 0 2px 12px rgba(0,0,0,.1); transition: all .2s;
   }
-  .back-btn:hover { background: var(--white); }
   .back-btn svg { width: 18px; height: 18px; }
-
   .brand {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;
     background: rgba(253,248,243,.92); backdrop-filter: blur(8px);
@@ -45,7 +35,6 @@
     color: var(--text); letter-spacing: .06em;
     box-shadow: 0 2px 12px rgba(0,0,0,.08); white-space: nowrap;
   }
-
   .venue-card {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
     background: var(--ivory); border-radius: 24px 24px 0 0;
@@ -54,9 +43,7 @@
     animation: slideUp .4s cubic-bezier(.32,.72,0,1) both;
   }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
   .handle { width: 36px; height: 4px; background: #e0c8c2; border-radius: 50px; margin: 8px auto 16px; }
-
   .card-content { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
   .card-img-placeholder {
     width: 72px; height: 72px; border-radius: 14px;
@@ -71,11 +58,9 @@
   .card-location svg { width: 11px; height: 11px; color: var(--rose); flex-shrink: 0; }
   .card-price { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--deep-rose); text-align: right; flex-shrink: 0; }
   .card-price span { display: block; font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 300; color: var(--muted); }
-
   .divider { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
   .divider-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
   .divider-diamond { width: 5px; height: 5px; background: var(--gold); transform: rotate(45deg); flex-shrink: 0; }
-
   .directions-btn {
     width: 100%; padding: 14px;
     background: linear-gradient(135deg, var(--rose), var(--deep-rose));
@@ -85,9 +70,7 @@
     display: flex; align-items: center; justify-content: center; gap: 8px;
     box-shadow: 0 4px 16px rgba(160,90,82,.35); transition: transform .2s;
   }
-  .directions-btn:hover { transform: translateY(-1px); }
   .directions-btn svg { width: 16px; height: 16px; }
-
   .maplibregl-popup-content {
     font-family: 'Jost', sans-serif !important; border-radius: 12px !important;
     padding: 10px 14px !important; border: 1px solid #f0e0da !important;
@@ -146,7 +129,9 @@
   document.getElementById('venuePrice').textContent = venuePrice;
   document.getElementById('venueStyle').textContent = venueStyle;
 
+  // Set English as primary language BEFORE map creation
   maptilersdk.config.apiKey = 'Ahig587dG30Od6FhJCqx';
+  maptilersdk.config.primaryLanguage = maptilersdk.Language.ENGLISH;
 
   const map = new maptilersdk.Map({
     container: 'map',
@@ -154,16 +139,20 @@
     center: [lng, lat],
     zoom: 15,
     pitch: 30,
-    language: 'en'
   });
 
   map.on('load', () => {
-    // Force English labels
+    // Force English on every symbol layer as a fallback
     const layers = map.getStyle().layers;
     for (const layer of layers) {
       if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
         try {
-          map.setLayoutProperty(layer.id, 'text-field', ['coalesce', ['get', 'name:en'], ['get', 'name']]);
+          map.setLayoutProperty(layer.id, 'text-field', [
+            'coalesce',
+            ['get', 'name:en'],
+            ['get', 'name:latin'],
+            ['get', 'name']
+          ]);
         } catch(e) {}
       }
     }
