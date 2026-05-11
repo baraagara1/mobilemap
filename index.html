@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Venue Map — Eternelle</title>
+<script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.1/maptiler-sdk.umd.min.js"></script>
+<link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.1/maptiler-sdk.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blush: #f2ddd5;
+    --rose: #c9847a;
+    --deep-rose: #a05a52;
+    --champagne: #f7efe6;
+    --gold: #c8a97e;
+    --ivory: #fdf8f3;
+    --text: #3a2a26;
+    --muted: #9b7e78;
+    --white: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Jost', sans-serif; background: var(--ivory); overflow: hidden; }
+
+  #map {
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+  }
+
+  /* Back button */
+  .back-btn {
+    position: fixed;
+    top: 20px; left: 20px;
+    z-index: 1000;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: rgba(253,248,243,.92);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid #e8d5ce;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--deep-rose);
+    box-shadow: 0 2px 12px rgba(0,0,0,.1);
+    transition: all .2s;
+  }
+  .back-btn:hover { background: var(--white); }
+  .back-btn svg { width: 18px; height: 18px; }
+
+  /* Brand */
+  .brand {
+    position: fixed;
+    top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 1000;
+    background: rgba(253,248,243,.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid #e8d5ce;
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-size: 14px;
+    color: var(--text); letter-spacing: .06em;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    white-space: nowrap;
+  }
+
+  /* Venue card */
+  .venue-card {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: var(--ivory);
+    border-radius: 24px 24px 0 0;
+    padding: 8px 20px 36px;
+    box-shadow: 0 -4px 24px rgba(201,132,122,.2);
+    animation: slideUp .4s cubic-bezier(.32,.72,0,1) both;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .handle {
+    width: 36px; height: 4px;
+    background: #e0c8c2; border-radius: 50px;
+    margin: 8px auto 16px;
+  }
+
+  .card-content {
+    display: flex; gap: 14px; align-items: center;
+    margin-bottom: 14px;
+  }
+  .card-img-placeholder {
+    width: 72px; height: 72px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--blush), #edddd6);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 28px;
+    border: 1px solid #f0e0da;
+  }
+  .card-info { flex: 1; }
+  .card-style {
+    font-size: 9px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--rose);
+    font-weight: 500; margin-bottom: 3px;
+  }
+  .card-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-style: italic;
+    color: var(--text); line-height: 1.1; margin-bottom: 4px;
+  }
+  .card-location {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--muted); font-weight: 300;
+  }
+  .card-location svg { width: 11px; height: 11px; color: var(--rose); flex-shrink: 0; }
+  .card-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 600; color: var(--deep-rose);
+    text-align: right; flex-shrink: 0;
+  }
+  .card-price span {
+    display: block; font-family: 'Jost', sans-serif;
+    font-size: 10px; font-weight: 300; color: var(--muted);
+  }
+
+  .divider {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+  }
+  .divider-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .divider-diamond { width: 5px; height: 5px; background: var(--gold); transform: rotate(45deg); flex-shrink: 0; }
+
+  .directions-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--rose), var(--deep-rose));
+    border: none; border-radius: 14px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-style: italic;
+    color: white; letter-spacing: .06em;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 16px rgba(160,90,82,.35);
+    transition: transform .2s;
+  }
+  .directions-btn:hover { transform: translateY(-1px); }
+  .directions-btn svg { width: 16px; height: 16px; }
+
+  /* Custom marker popup */
+  .maplibregl-popup-content {
+    font-family: 'Jost', sans-serif !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    border: 1px solid #f0e0da !important;
+    box-shadow: 0 4px 16px rgba(201,132,122,.2) !important;
+  }
+</style>
+</head>
+<body>
+
+<button class="back-btn" onclick="history.back()">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+</button>
+
+<div class="brand">Eternelle ✦</div>
+
+<div id="map"></div>
+
+<div class="venue-card">
+  <div class="handle"></div>
+  <div class="card-content">
+    <div class="card-img-placeholder">🏛️</div>
+    <div class="card-info">
+      <div class="card-style" id="venueStyle">Château</div>
+      <div class="card-name" id="venueName">Château des Fleurs</div>
+      <div class="card-location">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+        <span id="venueLocation">La Marsa, Tunis</span>
+      </div>
+    </div>
+    <div class="card-price">
+      <span id="venuePrice">2,400</span>
+      <span>DT / day</span>
+    </div>
+  </div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-diamond"></div>
+    <div class="divider-line"></div>
+  </div>
+
+  <button class="directions-btn" id="directionsBtn">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>
+    Get Directions
+  </button>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const lat = parseFloat(params.get('lat')) || 36.8925;
+  const lng = parseFloat(params.get('lng')) || 10.1471;
+  const venueName = decodeURIComponent(params.get('name') || 'Château des Fleurs');
+  const venueAddress = decodeURIComponent(params.get('location') || 'La Marsa, Tunis');
+  const venuePrice = params.get('price') || '2,400';
+  const venueStyle = decodeURIComponent(params.get('style') || 'Château');
+
+  document.getElementById('venueName').textContent = venueName;
+  document.getElementById('venueLocation').textContent = venueAddress;
+  document.getElementById('venuePrice').textContent = venuePrice;
+  document.getElementById('venueStyle').textContent = venueStyle;
+
+  maptilersdk.config.apiKey = 'Ahig587dG30Od6FhJCqx';
+
+  const map = new maptilersdk.Map({
+    container: 'map',
+    style: maptilersdk.MapStyle.STREETS,
+    center: [lng, lat],
+    zoom: 15,
+    pitch: 30,
+  });
+
+  map.on('load', () => {
+    // Custom rose marker
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div style="
+        width:48px;height:48px;
+        background:linear-gradient(135deg,#c9847a,#a05a52);
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        border:3px solid white;
+        box-shadow:0 4px 16px rgba(160,90,82,.5);
+        display:flex;align-items:center;justify-content:center;
+      ">
+        <span style="transform:rotate(45deg);font-size:20px;">🏛️</span>
+      </div>
+    `;
+
+    new maptilersdk.Marker({ element: el })
+      .setLngLat([lng, lat])
+      .setPopup(new maptilersdk.Popup({ offset: 50 }).setHTML(`
+        <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:#3a2a26">${venueName}</div>
+        <div style="font-family:'Jost',sans-serif;font-size:11px;color:#9b7e78;margin-top:3px">${venueAddress}</div>
+      `))
+      .addTo(map)
+      .togglePopup();
+  });
+
+  document.getElementById('directionsBtn').addEventListener('click', () => {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+  });
+</script>
+</body>
+</html>
